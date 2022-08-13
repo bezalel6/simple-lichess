@@ -1,0 +1,12 @@
+{
+	"compilerOptions": {
+		"declaration": true,
+		"module": "ES6",
+		"target": "esnext",
+		"outDir": "./build",
+		"sourceMap": true,
+		"moduleResolution": "node",
+		"allowSyntheticDefaultImports": true
+		// "watch": true
+	}
+}
