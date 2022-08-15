@@ -99,51 +99,6 @@ export function fetchGames(username: string, { rated, accessToken, maxGames }: G
 
   })
 
-  //   console.log({ a })
-  //   // const reader = res.body!.getReader();
-  //   const reader = a;
-  //   const decoder = new TextDecoder();
-  //   const read = () => {
-  //     reader.read().then((result) => {
-  //       if (result.done) {
-  //         console.log("done reading!");
-  //         //   console.log("majesty", chunks.join(""));
-  //         return;
-  //       }
-  //       const got = decoder.decode(result.value, { stream: true });
-  //       game(got)
-  //       read();
-  //     });
-  //   };
-  //   read();
-  // })
-
-
-
-  // }
-  // else {
-  //   import('node-fetch').then((nodeFetch) => {
-  //     nodeFetch.default(url, {
-  //       headers,
-  //       method: "GET",
-  //     }).then((res) => {
-  //       const reader = res.body!;
-  //       const decoder = new TextDecoder();
-
-  //       reader.on('readable', () => {
-  //         const read = reader.read() as Buffer;
-  //         if (!read) {
-  //           console.log('finished')
-  //           return
-  //         }
-  //         const dec = decoder.decode(read);
-  //         // console.log('readable', dec)
-  //         game(dec)
-  //       })
-  //     })
-  //   })
-  // }
-
   return stream;
 }
 
