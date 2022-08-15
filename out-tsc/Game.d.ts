@@ -1,5 +1,5 @@
 import { DynamicMove, GameResult, Termination } from "./Misc";
-export default class Game {
+declare class Game {
     event: string;
     site: string;
     white: string;
@@ -25,3 +25,4 @@ export default class Game {
     didPlay(move: string, moves: string[], exact: boolean): string;
     convertDynamic(move: DynamicMove, player: string): string;
 }
+export { Game };

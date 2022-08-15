@@ -1,6 +1,7 @@
 // import express from 'express'
 // import { fetchGames, fetchUserInfo } from './Fetcher.js';
 // import Game from './Game.js';
+import { fetchGames } from './Fetcher.js';
 // abstract class App {
 // 	static get port(): number { return 5002 }
 // 	static init(): any {
@@ -28,7 +29,16 @@
 // }
 // App.init()
 // App.start_server()
-export * from './Game.js';
+// (async function a() {
+//     (await fetchGames("bezalel6", { rated: 'rated', maxGames: 5 }))).listen((game: Game) => {
+//         console.log(game.white, 'vs', game.black)
+//     })
+// }
+export function test() {
+    fetchGames('bezalel6', { rated: "rated", maxGames: 5 }).listen(game => {
+        console.log('white', game.white, 'vs', 'black', game.black);
+    });
+}
 export * from './Fetcher.js';
 export * from './Misc.js';
 export * from './UserData.js';

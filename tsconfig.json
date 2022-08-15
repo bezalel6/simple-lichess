@@ -1,9 +1,9 @@
 {
 	"compilerOptions": {
 		"declaration": true,
-		"module": "ES6",
-		"target": "esnext",
-		"outDir": "./build",
+		"module": "ES2022",
+		"target": "ES2015",
+		"outDir": "./out-tsc",
 		"sourceMap": true,
 		"moduleResolution": "node",
 		"allowSyntheticDefaultImports": true

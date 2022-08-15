@@ -1,12 +1,12 @@
 import UserData from "./UserData";
-import Game from "./Game.js";
+import { Game } from "./Game.js";
 declare type RatedRequirement = "rated" | "unrated" | "both";
 interface GamesOptions {
     rated: RatedRequirement;
     accessToken?: string;
     maxGames?: number;
 }
-export declare function fetchGames(username: string, { rated, accessToken, maxGames }: GamesOptions): Promise<SimpleStream<Game>>;
+export declare function fetchGames(username: string, { rated, accessToken, maxGames }: GamesOptions): SimpleStream<Game>;
 export declare class SimpleStream<T> {
     private stream;
     constructor();

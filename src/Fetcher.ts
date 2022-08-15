@@ -1,7 +1,11 @@
 import UserData from "./UserData";
-import fetch from "node-fetch";
-import Game from "./Game.js";
-import { PassThrough, Readable, Stream, Transform } from "stream";
+import { Game } from "./Game.js";
+import S, { PassThrough } from "stream";
+import LAME, { Response } from 'cross-fetch'
+
+// import fetch from "node-fetch";
+// import fetch from "node-fetch";
+
 
 
 type RatedRequirement = "rated" | "unrated" | "both";
@@ -11,8 +15,11 @@ interface GamesOptions {
   maxGames?: number;
 }
 const GAMES_FETCH = "https://lichess.org/api/games/user";
-export async function fetchGames(username: string, { rated, accessToken, maxGames }: GamesOptions) {
-  let headers = {};
+export function fetchGames(username: string, { rated, accessToken, maxGames }: GamesOptions) {
+  // accept application/x-chess-pgn 
+  let headers = {
+    Accept: 'application/x-chess-pgn'
+  };
   if (accessToken) {
     headers['Authorization'] = "Bearer " + accessToken;
   }
@@ -31,29 +38,115 @@ export async function fetchGames(username: string, { rated, accessToken, maxGame
   if (maxGames) {
     params.append('max', maxGames + "")
   }
-
   const stream = new SimpleStream<Game>();
-  fetch(url + "?" + params, {
-    headers,
-    method: "GET",
-  }).then((res) => {
-    const reader = res.body!;
-    const decoder = new TextDecoder();
+  if (params.values())
+    url += "?" + params;
 
-    reader.on('readable', () => {
-      const read = reader.read() as Buffer;
-      if (!read) {
-        console.log('finished')
-        return
+
+  function game(pgn: string) {
+    pgn
+      .split("\n\n\n")
+      .filter((split) => split.trim())
+      .forEach(p => {
+        stream.write(new Game(p, username));
+      });
+  }
+  const IS_NODE = typeof window === "undefined"
+  const LE_FETCHER = IS_NODE ? LAME : fetch;
+  // if (isNode()) {
+  LE_FETCHER(url, {
+    headers,
+    mode: "cors",
+    method: 'GET',
+
+  }).then(res => {
+    try {
+      const a = res.body as unknown as PassThrough
+      const reader = IS_NODE ? res.body as unknown as PassThrough : res.body.getReader();
+      const decoder = new TextDecoder();
+      if (IS_NODE) {
+
+        (reader as PassThrough).on('readable', () => {
+          const read = reader.read() as Buffer;
+          if (!read) {
+            console.log('finished')
+            return
+          }
+          const dec = decoder.decode(read);
+          // console.log('readable', dec)
+          game(dec)
+        })
       }
-      const dec = decoder.decode(read);
-      // console.log('readable', dec)
-      stream.write(new Game(dec, username));
-    })
+      else {
+        const read = () => {
+          (reader as ReadableStreamDefaultReader).read().then((result) => {
+            if (result.done) {
+              console.log("done reading!");
+              //   console.log("majesty", chunks.join(""));
+              return;
+            }
+            const got = decoder.decode(result.value, { stream: true });
+            game(got)
+            read();
+          });
+        };
+        read();
+      }
+
+    } catch (e) {
+      console.error('threw', e)
+    }
+
   })
+
+  //   console.log({ a })
+  //   // const reader = res.body!.getReader();
+  //   const reader = a;
+  //   const decoder = new TextDecoder();
+  //   const read = () => {
+  //     reader.read().then((result) => {
+  //       if (result.done) {
+  //         console.log("done reading!");
+  //         //   console.log("majesty", chunks.join(""));
+  //         return;
+  //       }
+  //       const got = decoder.decode(result.value, { stream: true });
+  //       game(got)
+  //       read();
+  //     });
+  //   };
+  //   read();
+  // })
+
+
+
+  // }
+  // else {
+  //   import('node-fetch').then((nodeFetch) => {
+  //     nodeFetch.default(url, {
+  //       headers,
+  //       method: "GET",
+  //     }).then((res) => {
+  //       const reader = res.body!;
+  //       const decoder = new TextDecoder();
+
+  //       reader.on('readable', () => {
+  //         const read = reader.read() as Buffer;
+  //         if (!read) {
+  //           console.log('finished')
+  //           return
+  //         }
+  //         const dec = decoder.decode(read);
+  //         // console.log('readable', dec)
+  //         game(dec)
+  //       })
+  //     })
+  //   })
+  // }
 
   return stream;
 }
+
 export class SimpleStream<T>{
   private stream: PassThrough;
   constructor() {

@@ -1,15 +1,4 @@
-export default class Game {
-    event;
-    site;
-    white;
-    black;
-    result;
-    termination;
-    moves;
-    whiteMoves;
-    blackMoves;
-    pgn;
-    myUsername;
+class Game {
     constructor(pgn, myUsername) {
         try {
             this.pgn = pgn;
@@ -93,4 +82,5 @@ export default class Game {
 function pgnProperty(property, pgn) {
     return pgn.match(`\\[${property} "([^"]+)`)[1];
 }
+export { Game };
 //# sourceMappingURL=Game.js.map
