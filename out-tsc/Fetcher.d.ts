@@ -1,9 +1,11 @@
 import UserData from "./UserData";
 import { Game } from "./Game.js";
 declare type RatedRequirement = "rated" | "unrated" | "both";
-interface GamesOptions {
-    rated: RatedRequirement;
+interface FetchOptions {
     accessToken?: string;
+}
+interface GamesOptions extends FetchOptions {
+    rated?: RatedRequirement;
     maxGames?: number;
 }
 export declare function fetchGames(username: string, { rated, accessToken, maxGames }: GamesOptions): SimpleStream<Game>;

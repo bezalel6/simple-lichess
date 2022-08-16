@@ -9,13 +9,19 @@ import LAME, { Response } from 'cross-fetch'
 
 
 type RatedRequirement = "rated" | "unrated" | "both";
-interface GamesOptions {
-  rated: RatedRequirement;
+
+interface FetchOptions {
   accessToken?: string;
-  maxGames?: number;
 }
+interface GamesOptions extends FetchOptions {
+  rated?: RatedRequirement;
+  maxGames?: number;
+
+}
+
 const GAMES_FETCH = "https://lichess.org/api/games/user";
 export function fetchGames(username: string, { rated, accessToken, maxGames }: GamesOptions) {
+  rated = rated ? rated : "both";
   // accept application/x-chess-pgn 
   let headers = {
     Accept: 'application/x-chess-pgn'
@@ -100,6 +106,78 @@ export function fetchGames(username: string, { rated, accessToken, maxGames }: G
   })
 
   return stream;
+}
+class Fetch {
+  params = new URLSearchParams();
+  headers = {};
+  constructor({ accessToken, acceptType = "application/x-chess-pgn" }: FetchOptions & { acceptType: string }) {
+    this.headers["Accept"] = acceptType;
+    if (accessToken)
+      this.headers['Authorization'] = "Bearer " + accessToken;
+  }
+  private get fetcher() {
+    return this.isNode ? LAME : fetch;
+  }
+  private get isNode() {
+    return typeof window === "undefined";
+  }
+
+
+
+  startFetch = <T>(endpoint: string, construct: ((chunk: string) => T)): SimpleStream<T> => {
+    const stream = new SimpleStream<T>();
+
+    const url = endpoint + "/" + ("?" + this.params.toString())
+
+    function readChunk(chunk: string) {
+      const obj: T = construct(chunk);
+      stream.write(obj)
+    }
+    this.fetcher(url, {
+      headers: this.headers,
+      mode: "cors",
+      method: 'GET',
+
+    }).then(res => {
+      try {
+        const a = res.body as unknown as PassThrough
+        const reader = this.isNode ? res.body as unknown as PassThrough : res.body.getReader();
+        const decoder = new TextDecoder();
+        if (this.isNode) {
+          (reader as PassThrough).on('readable', () => {
+            const read = reader.read() as Buffer;
+            if (!read) {
+              console.log('finished')
+              return
+            }
+            const dec = decoder.decode(read);
+            // console.log('readable', dec)
+            readChunk(dec)
+          })
+        }
+        else {
+          const read = () => {
+            (reader as ReadableStreamDefaultReader).read().then((result) => {
+              if (result.done) {
+                console.log("done reading!");
+                //   console.log("majesty", chunks.join(""));
+                return;
+              }
+              const got = decoder.decode(result.value, { stream: true });
+              readChunk(got)
+              read();
+            });
+          };
+          read();
+        }
+
+      } catch (e) {
+        console.error('threw', e)
+      }
+
+    })
+    return stream;
+  }
 }
 
 export class SimpleStream<T>{

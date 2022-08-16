@@ -5177,6 +5177,7 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
 };
 const GAMES_FETCH = "https://lichess.org/api/games/user";
 function fetchGames(username, { rated, accessToken, maxGames }) {
+    rated = rated ? rated : "both";
     // accept application/x-chess-pgn 
     let headers = {
         Accept: 'application/x-chess-pgn'
@@ -5254,51 +5255,8 @@ function fetchGames(username, { rated, accessToken, maxGames }) {
             console.error('threw', e);
         }
     });
-    //   console.log({ a })
-    //   // const reader = res.body!.getReader();
-    //   const reader = a;
-    //   const decoder = new TextDecoder();
-    //   const read = () => {
-    //     reader.read().then((result) => {
-    //       if (result.done) {
-    //         console.log("done reading!");
-    //         //   console.log("majesty", chunks.join(""));
-    //         return;
-    //       }
-    //       const got = decoder.decode(result.value, { stream: true });
-    //       game(got)
-    //       read();
-    //     });
-    //   };
-    //   read();
-    // })
-    // }
-    // else {
-    //   import('node-fetch').then((nodeFetch) => {
-    //     nodeFetch.default(url, {
-    //       headers,
-    //       method: "GET",
-    //     }).then((res) => {
-    //       const reader = res.body!;
-    //       const decoder = new TextDecoder();
-    //       reader.on('readable', () => {
-    //         const read = reader.read() as Buffer;
-    //         if (!read) {
-    //           console.log('finished')
-    //           return
-    //         }
-    //         const dec = decoder.decode(read);
-    //         // console.log('readable', dec)
-    //         game(dec)
-    //       })
-    //     })
-    //   })
-    // }
     return stream;
 }
-// function isNode() {
-//   return typeof window !== 'undefined'
-// }
 class SimpleStream {
     constructor() {
         this.stream = new PassThrough();
