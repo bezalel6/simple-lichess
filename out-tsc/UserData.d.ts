@@ -131,7 +131,7 @@ interface Count {
     import: number;
     me: number;
 }
-interface UserData {
+interface UserInfo {
     id: string;
     username: string;
     online: boolean;
@@ -155,5 +155,5 @@ interface UserData {
     blocking: boolean;
     followsYou: boolean;
 }
-export default UserData;
+export default UserInfo;
 export { Chess960, Atomic, RacingKings, UltraBullet, Blitz, KingOfTheHill, Bullet, Correspondence, Horde, Puzzle, Classical, Rapid, Storm, Perfs, Profile, PlayTime, Count, };

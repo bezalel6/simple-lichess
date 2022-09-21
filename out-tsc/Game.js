@@ -25,6 +25,7 @@ class Game {
                 }
                 this.whiteMoves.push(whiteM);
             }
+            this.description = `white:${this.white} vs black:${this.black} ${this.result}`;
         }
         catch (e) {
             throw new Error(`threw inside game constructor. pgn: ${pgn}. e: ${e}`);
@@ -83,4 +84,4 @@ function pgnProperty(property, pgn) {
     return pgn.match(`\\[${property} "([^"]+)`)[1];
 }
 export { Game };
-//# sourceMappingURL=Game.js.map
+//# sourceMappingURL=game.js.map

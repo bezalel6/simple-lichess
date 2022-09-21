@@ -6,6 +6,7 @@
 //   }
 
 import commonjs from "@rollup/plugin-commonjs";
+import nodePolyfills from "rollup-plugin-polyfill-node";
 import nodeResolve from "@rollup/plugin-node-resolve";
 
 // });
@@ -17,6 +18,5 @@ export default {
     file: "dist/bundle.js",
     format: "cjs",
   },
-  plugins: [commonjs(), nodePolyfills(), nodeResolve()],
+  plugins: [commonjs(), nodePolyfills()],
 };
-import nodePolyfills from "rollup-plugin-polyfill-node";

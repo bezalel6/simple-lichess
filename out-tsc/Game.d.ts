@@ -1,4 +1,4 @@
-import { DynamicMove, GameResult, Termination } from "./Misc";
+import { DynamicMove, GameResult, Termination } from "./misc";
 declare class Game {
     event: string;
     site: string;
@@ -11,6 +11,7 @@ declare class Game {
     blackMoves: string[];
     pgn: string;
     myUsername: string;
+    description: string;
     constructor(pgn: string, myUsername: string);
     get didWin(): boolean;
     get didDraw(): boolean;

@@ -1,4 +1,4 @@
-import { DynamicMove, GameResult, Termination } from "./Misc";
+import { DynamicMove, GameResult, Termination } from "./misc";
 
 class Game {
   event: string;
@@ -12,6 +12,7 @@ class Game {
   blackMoves: string[];
   pgn: string;
   myUsername: string;
+  description: string;
   constructor(pgn: string, myUsername: string) {
     try {
       this.pgn = pgn;
@@ -39,12 +40,13 @@ class Game {
         this.whiteMoves.push(whiteM);
 
       }
+      this.description = `white:${this.white} vs black:${this.black} ${this.result}`;
+
     } catch (e) {
       throw new Error(`threw inside game constructor. pgn: ${pgn}. e: ${e}`);
     }
 
   }
-
   get didWin(): boolean {
     return (this.result === "1-0" && this.isWhite) || (this.result === "0-1" && !this.isWhite);
   }

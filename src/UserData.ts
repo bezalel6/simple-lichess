@@ -148,7 +148,7 @@ interface Count {
     me: number;
 }
 
-interface UserData {
+interface UserInfo {
     id: string;
     username: string;
     online: boolean;
@@ -172,7 +172,7 @@ interface UserData {
     blocking: boolean;
     followsYou: boolean;
 }
-export default UserData;
+export default UserInfo;
 export {
     Chess960,
     Atomic,

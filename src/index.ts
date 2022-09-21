@@ -2,58 +2,13 @@
 // import { fetchGames, fetchUserInfo } from './Fetcher.js';
 // import Game from './Game.js';
 
-import { fetchGames } from './Fetcher.js'
+console.log.bind((a) => {
+  console.error(a);
+});
 
-// abstract class App {
-
-// 	static get port(): number { return 5002 }
-
-// 	static init(): any {
-
-// 		switch (process.argv[2]) {
-
-// 			case 'start-server':
-// 				return App.start_server()
-// 			default:
-// 				return App.display_help()
-// 		}
-// 	}
-
-// 	static start_server(): void {
-
-// 		const server = express()
-// 		server.get('/make-vehicle', App.make_vehicle)
-// 		server.get('/', async (req, res) => {
-// 			(await fetchGames("bezalel6", { rated: 'rated', maxGames: 5 })).listen((game: Game) => {
-// 				console.log(game.white, 'vs', game.black)
-// 			})
-// 			res.send("yupyup")
-// 		})
-// 		server.listen(App.port, () => { console.log('Listening on port ' + App.port) })
-// 	}
-
-// 	static make_vehicle(request: express.Request, response: express.Response) {
-
-// 	}
-
-// 	static display_help() { console.log('usage: index.ts [ start-server | list-vehicles ]') }
-// }
-
-// App.init()
-
-// App.start_server()
-
-// (async function a() {
-//     (await fetchGames("bezalel6", { rated: 'rated', maxGames: 5 }))).listen((game: Game) => {
-//         console.log(game.white, 'vs', game.black)
-//     })
-// }
-
-export function test() {
-    fetchGames('bezalel6', { rated: "rated", maxGames: 5 }).listen(game => {
-        console.log('white', game.white, 'vs', 'black', game.black);
-    })
-}
-export * from './Fetcher.js'
-export * from './Misc.js'
-export * from './UserData.js'
+export * from "./auth.js";
+export * from "./test.js";
+// export * from './eval.js'
+export * from "./fetcher.js";
+export * from "./misc.js";
+export * from "./UserData.js";

@@ -2,11 +2,107 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
+var oauth2AuthCodePkce = require('@bity/oauth2-auth-code-pkce');
 var LAME = require('cross-fetch');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
 var LAME__default = /*#__PURE__*/_interopDefaultLegacy(LAME);
+
+const lichessHost = "https://lichess.org";
+const scopes = [];
+exports.clientId = void 0; // "example.com";
+exports.clientUrl = void 0; //"http://localhost:5173/";
+let didSetup = false;
+/**
+ *
+ * @param setup:
+ *  clientId: string; // "example.com"
+ *  clientUrl: string; //"http://localhost:5173/"
+ */
+function setup({ clientID, clientURL }) {
+    exports.clientUrl = a(clientURL);
+    exports.clientId = clientID;
+    didSetup = true;
+}
+function a(u) {
+    const url = new URL(u);
+    url.search = "";
+    return url.href;
+}
+class Ctrl {
+    constructor() {
+        this.oauth = new oauth2AuthCodePkce.OAuth2AuthCodePKCE({
+            authorizationUrl: `${lichessHost}/oauth`,
+            tokenUrl: `${lichessHost}/api/token`,
+            clientId: exports.clientId,
+            scopes,
+            redirectUrl: exports.clientUrl,
+            onAccessTokenExpiry: (refreshAccessToken) => refreshAccessToken(),
+            onInvalidGrant: (_retry) => { },
+        });
+        if (!didSetup) {
+            throw "didnt setup";
+        }
+    }
+    async login() {
+        // Redirect to authentication prompt.
+        await this.oauth.fetchAuthorizationCode();
+    }
+    async init() {
+        try {
+            const hasAuthCode = await this.oauth.isReturningFromAuthServer();
+            if (hasAuthCode) {
+                // Might want to persist accessContext.token until the user logs out.
+                this.accessContext = await this.oauth.getAccessToken();
+                console.log(this.accessContext);
+                this.tryRedraw();
+                // Can also use this convenience wrapper for fetch() instead of
+                // using manually using getAccessToken() and setting the
+                // "Authorization: Bearer ..." header.
+                // const fetch = this.oauth.decorateFetchHTTPClient(window.fetch);
+                // await this.useApi(fetch);
+            }
+            else {
+                console.log("has no auth");
+            }
+        }
+        catch (err) {
+            this.error = err;
+            console.error(err);
+            this.tryRedraw();
+        }
+    }
+    tryRedraw() {
+        if (this.redraw) {
+            this.redraw();
+        }
+    }
+    async useApi(fetch) {
+        // Example request using @bity/oauth2-auth-code-pkce decorator:
+        // Lookup email associated with the Lichess account.
+        // Requests will fail with 401 Unauthorized if the access token expired
+        // or was revoked. Make sure to offer a chance to reauthenticate.
+        // const res = await fetch(`${lichessHost}/api/account/`);
+        // this.email = (await res.json()).email;
+        this.tryRedraw();
+    }
+    async logout() {
+        var _a, _b;
+        const token = (_b = (_a = this.accessContext) === null || _a === void 0 ? void 0 : _a.token) === null || _b === void 0 ? void 0 : _b.value;
+        this.accessContext = undefined;
+        this.error = undefined;
+        this.email = undefined;
+        this.tryRedraw();
+        // Example request using vanilla fetch: Revoke access token.
+        await fetch(`${lichessHost}/api/token`, {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+    }
+}
 
 class Game {
     constructor(pgn, myUsername) {
@@ -35,6 +131,7 @@ class Game {
                 }
                 this.whiteMoves.push(whiteM);
             }
+            this.description = `white:${this.white} vs black:${this.black} ${this.result}`;
         }
         catch (e) {
             throw new Error(`threw inside game constructor. pgn: ${pgn}. e: ${e}`);
@@ -569,7 +666,7 @@ var global$1 = (typeof global !== "undefined" ? global :
   typeof self !== "undefined" ? self :
   typeof window !== "undefined" ? window : {});
 
-var lookup = [];
+var lookup$1 = [];
 var revLookup = [];
 var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
 var inited = false;
@@ -577,7 +674,7 @@ function init () {
   inited = true;
   var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
   for (var i = 0, len = code.length; i < len; ++i) {
-    lookup[i] = code[i];
+    lookup$1[i] = code[i];
     revLookup[code.charCodeAt(i)] = i;
   }
 
@@ -631,7 +728,7 @@ function toByteArray (b64) {
 }
 
 function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
+  return lookup$1[num >> 18 & 0x3F] + lookup$1[num >> 12 & 0x3F] + lookup$1[num >> 6 & 0x3F] + lookup$1[num & 0x3F]
 }
 
 function encodeChunk (uint8, start, end) {
@@ -663,14 +760,14 @@ function fromByteArray (uint8) {
   // pad the end with zeros, but make sure to not forget the extra bytes
   if (extraBytes === 1) {
     tmp = uint8[len - 1];
-    output += lookup[tmp >> 2];
-    output += lookup[(tmp << 4) & 0x3F];
+    output += lookup$1[tmp >> 2];
+    output += lookup$1[(tmp << 4) & 0x3F];
     output += '==';
   } else if (extraBytes === 2) {
     tmp = (uint8[len - 2] << 8) + (uint8[len - 1]);
-    output += lookup[tmp >> 10];
-    output += lookup[(tmp >> 4) & 0x3F];
-    output += lookup[(tmp << 2) & 0x3F];
+    output += lookup$1[tmp >> 10];
+    output += lookup$1[(tmp >> 4) & 0x3F];
+    output += lookup$1[(tmp << 2) & 0x3F];
     output += '=';
   }
 
@@ -5166,96 +5263,132 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-const GAMES_FETCH = "https://lichess.org/api/games/user";
-function fetchGames(username, { rated, accessToken, maxGames }) {
-    rated = rated ? rated : "both";
-    // accept application/x-chess-pgn 
-    let headers = {
-        Accept: 'application/x-chess-pgn'
-    };
-    if (accessToken) {
-        headers['Authorization'] = "Bearer " + accessToken;
+class Fetch {
+    constructor({ accessToken }, acceptType = "application/x-chess-pgn") {
+        this.params = new URLSearchParams();
+        this.headers = {};
+        this.startFetch = (endpoint, construct = (a) => {
+            return JSON.parse(a);
+        }) => {
+            const stream = new SimpleStream();
+            const url = endpoint + ("?" + this.params.toString());
+            console.log("url", url);
+            function readChunk(chunk) {
+                const obj = construct(chunk);
+                stream.write(obj);
+            }
+            this.fetcher(url, {
+                headers: this.headers,
+                mode: "cors",
+                method: "GET",
+            }).then((res) => {
+                try {
+                    const a = res.body;
+                    const reader = this.isNode
+                        ? res.body
+                        : res.body.getReader();
+                    const decoder = new TextDecoder();
+                    if (this.isNode) {
+                        reader.on("readable", () => {
+                            const read = reader.read();
+                            if (!read) {
+                                console.log("finished");
+                                return;
+                            }
+                            const dec = decoder.decode(read);
+                            // console.log('readable', dec)
+                            readChunk(dec);
+                        });
+                    }
+                    else {
+                        const read = () => {
+                            reader.read().then((result) => {
+                                if (result.done) {
+                                    console.log("done reading!");
+                                    //   console.log("majesty", chunks.join(""));
+                                    return;
+                                }
+                                const got = decoder.decode(result.value, { stream: true });
+                                readChunk(got);
+                                read();
+                            });
+                        };
+                        read();
+                    }
+                }
+                catch (e) {
+                    console.error("threw", e);
+                }
+            });
+            return stream;
+        };
+        this.headers["Accept"] = acceptType;
+        if (accessToken)
+            this.headers["Authorization"] = "Bearer " + accessToken;
     }
+    get fetcher() {
+        return this.isNode
+            ? LAME__default["default"]
+            : (url, obj) => window.fetch(url, obj);
+        // return fetch;
+    }
+    get isNode() {
+        return typeof window === "undefined";
+    }
+}
+
+const GAMES_FETCH = "https://lichess.org/api/games/user";
+const GAME_FETCH = "https://lichess.org/game/export/";
+function fetchGames(username, { rated = "both", accessToken, maxGames }) {
+    const fetcher = new Fetch({ accessToken });
     let url = GAMES_FETCH + `/${username}`;
-    const params = new URLSearchParams();
+    const params = fetcher.params;
     switch (rated) {
         case "rated": {
-            params.append('rated', 'true');
+            params.append("rated", "true");
             break;
         }
         case "unrated": {
-            params.append('rated', 'false');
+            params.append("rated", "false");
             break;
         }
     }
     if (maxGames) {
-        params.append('max', maxGames + "");
+        params.append("max", maxGames + "");
     }
-    const stream = new SimpleStream();
-    if (params.values())
-        url += "?" + params;
-    function game(pgn) {
-        pgn
-            .split("\n\n\n")
-            .filter((split) => split.trim())
-            .forEach(p => {
-            stream.write(new Game(p, username));
-        });
-    }
-    const IS_NODE = typeof window === "undefined";
-    const LE_FETCHER = IS_NODE ? LAME__default["default"] : fetch;
-    // if (isNode()) {
-    LE_FETCHER(url, {
-        headers,
-        mode: "cors",
-        method: 'GET',
-    }).then(res => {
-        try {
-            const a = res.body;
-            const reader = IS_NODE ? res.body : res.body.getReader();
-            const decoder = new TextDecoder();
-            if (IS_NODE) {
-                reader.on('readable', () => {
-                    const read = reader.read();
-                    if (!read) {
-                        console.log('finished');
-                        return;
-                    }
-                    const dec = decoder.decode(read);
-                    // console.log('readable', dec)
-                    game(dec);
-                });
-            }
-            else {
-                const read = () => {
-                    reader.read().then((result) => {
-                        if (result.done) {
-                            console.log("done reading!");
-                            //   console.log("majesty", chunks.join(""));
-                            return;
-                        }
-                        const got = decoder.decode(result.value, { stream: true });
-                        game(got);
-                        read();
-                    });
-                };
-                read();
-            }
-        }
-        catch (e) {
-            console.error('threw', e);
-        }
+    return fetcher.startFetch(url, (str) => {
+        return new Game(str, username);
     });
-    return stream;
+}
+function fetchGame(gameID, myUn) {
+    const f = new Fetch({});
+    return f.startFetch(GAME_FETCH + gameID, (str) => {
+        return new Game(str, myUn);
+    });
+}
+const DB_ENDPOINT = "https://explorer.lichess.ovh/";
+function lookup({ fen, database, play }) {
+    const fetcher = new Fetch({});
+    if (fen)
+        fetcher.params.append("fen", fen);
+    if (play) {
+        fetcher.params.append("play", play);
+    }
+    return fetcher.startFetch(DB_ENDPOINT + database);
+}
+function lookupPlayer({ fen, play, player, color, }) {
+    const fetcher = new Fetch({});
+    fetcher.params.append("color", color);
+    if (fen)
+        fetcher.params.append("fen", fen);
+    if (play) {
+        fetcher.params.append("play", play);
+    }
+    if (player) {
+        fetcher.params.append("player", player);
+    }
+    console.log("params - ", fetcher.params.toString());
+    return fetcher.startFetch(DB_ENDPOINT + "player");
 }
 class SimpleStream {
     constructor() {
@@ -5265,60 +5398,44 @@ class SimpleStream {
         this.stream.push(JSON.stringify(obj));
     }
     listen(callback) {
-        this.stream.on('data', chunk => {
+        this.stream.on("data", (chunk) => {
             const converted = JSON.parse(chunk);
             callback(converted);
         });
     }
 }
-function fetchUserInfo(username) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const userDetailsF = yield fetch("https://lichess.org/api/user/" + username);
-        const userDetails = yield userDetailsF.json();
-        return userDetails;
-    });
+async function fetchUserInfo(username) {
+    const userDetailsF = await fetch("https://lichess.org/api/user/" + username);
+    const userDetails = (await userDetailsF.json());
+    return userDetails;
+}
+
+function test() {
+    // fetcher();
+    // evaluatePosition({ fen: "rnbqkbnQ/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR w KQq - 0 1" })
+    // lookup({ fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", database: "masters" }).listen(console.log)
+    // lookupPlayer({
+    //   fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    //   player: "damnsaltythatsport",
+    //   play: "d2d4",
+    // }).listen(console.log);
 }
 
 // import express from 'express'
-// abstract class App {
-// 	static get port(): number { return 5002 }
-// 	static init(): any {
-// 		switch (process.argv[2]) {
-// 			case 'start-server':
-// 				return App.start_server()
-// 			default:
-// 				return App.display_help()
-// 		}
-// 	}
-// 	static start_server(): void {
-// 		const server = express()
-// 		server.get('/make-vehicle', App.make_vehicle)
-// 		server.get('/', async (req, res) => {
-// 			(await fetchGames("bezalel6", { rated: 'rated', maxGames: 5 })).listen((game: Game) => {
-// 				console.log(game.white, 'vs', game.black)
-// 			})
-// 			res.send("yupyup")
-// 		})
-// 		server.listen(App.port, () => { console.log('Listening on port ' + App.port) })
-// 	}
-// 	static make_vehicle(request: express.Request, response: express.Response) {
-// 	}
-// 	static display_help() { console.log('usage: index.ts [ start-server | list-vehicles ]') }
-// }
-// App.init()
-// App.start_server()
-// (async function a() {
-//     (await fetchGames("bezalel6", { rated: 'rated', maxGames: 5 }))).listen((game: Game) => {
-//         console.log(game.white, 'vs', game.black)
-//     })
-// }
-function test() {
-    fetchGames('bezalel6', { rated: "rated", maxGames: 5 }).listen(game => {
-        console.log('white', game.white, 'vs', 'black', game.black);
-    });
-}
+// import { fetchGames, fetchUserInfo } from './Fetcher.js';
+// import Game from './Game.js';
+console.log.bind((a) => {
+    console.error(a);
+});
 
+exports.Ctrl = Ctrl;
 exports.SimpleStream = SimpleStream;
+exports.fetchGame = fetchGame;
 exports.fetchGames = fetchGames;
 exports.fetchUserInfo = fetchUserInfo;
+exports.lichessHost = lichessHost;
+exports.lookup = lookup;
+exports.lookupPlayer = lookupPlayer;
+exports.scopes = scopes;
+exports.setup = setup;
 exports.test = test;

@@ -1,2 +1,2 @@
 export {};
-//# sourceMappingURL=Misc.js.map
+//# sourceMappingURL=misc.js.map

@@ -1,106 +1,58 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-import { Game } from "./Game.js";
+import { Game } from "./game";
 import { PassThrough } from "stream";
-import LAME from 'cross-fetch';
+import { Fetch } from "./fetch";
 const GAMES_FETCH = "https://lichess.org/api/games/user";
-export function fetchGames(username, { rated, accessToken, maxGames }) {
-    rated = rated ? rated : "both";
-    // accept application/x-chess-pgn 
-    let headers = {
-        Accept: 'application/x-chess-pgn'
-    };
-    if (accessToken) {
-        headers['Authorization'] = "Bearer " + accessToken;
-    }
+const GAME_FETCH = "https://lichess.org/game/export/";
+export function fetchGames(username, { rated = "both", accessToken, maxGames }) {
+    const fetcher = new Fetch({ accessToken });
     let url = GAMES_FETCH + `/${username}`;
-    const params = new URLSearchParams();
+    const params = fetcher.params;
     switch (rated) {
         case "rated": {
-            params.append('rated', 'true');
+            params.append("rated", "true");
             break;
         }
         case "unrated": {
-            params.append('rated', 'false');
+            params.append("rated", "false");
             break;
         }
     }
     if (maxGames) {
-        params.append('max', maxGames + "");
+        params.append("max", maxGames + "");
     }
-    const stream = new SimpleStream();
-    if (params.values())
-        url += "?" + params;
-    function game(pgn) {
-        pgn
-            .split("\n\n\n")
-            .filter((split) => split.trim())
-            .forEach(p => {
-            stream.write(new Game(p, username));
-        });
-    }
-    const IS_NODE = typeof window === "undefined";
-    const LE_FETCHER = IS_NODE ? LAME : fetch;
-    // if (isNode()) {
-    LE_FETCHER(url, {
-        headers,
-        mode: "cors",
-        method: 'GET',
-    }).then(res => {
-        try {
-            const a = res.body;
-            const reader = IS_NODE ? res.body : res.body.getReader();
-            const decoder = new TextDecoder();
-            if (IS_NODE) {
-                reader.on('readable', () => {
-                    const read = reader.read();
-                    if (!read) {
-                        console.log('finished');
-                        return;
-                    }
-                    const dec = decoder.decode(read);
-                    // console.log('readable', dec)
-                    game(dec);
-                });
-            }
-            else {
-                const read = () => {
-                    reader.read().then((result) => {
-                        if (result.done) {
-                            console.log("done reading!");
-                            //   console.log("majesty", chunks.join(""));
-                            return;
-                        }
-                        const got = decoder.decode(result.value, { stream: true });
-                        game(got);
-                        read();
-                    });
-                };
-                read();
-            }
-        }
-        catch (e) {
-            console.error('threw', e);
-        }
+    return fetcher.startFetch(url, (str) => {
+        return new Game(str, username);
     });
-    return stream;
 }
-function createFetch() {
-    return {
-        params: new URLSearchParams(),
-        paramsSetup: () => {
-        },
-        headers: {},
-        startFetch: (endpoint, modEach = null) => {
-        }
-    };
+export function fetchGame(gameID, myUn) {
+    const f = new Fetch({});
+    return f.startFetch(GAME_FETCH + gameID, (str) => {
+        return new Game(str, myUn);
+    });
+}
+const DB_ENDPOINT = "https://explorer.lichess.ovh/";
+export function lookup({ fen, database, play }) {
+    const fetcher = new Fetch({});
+    if (fen)
+        fetcher.params.append("fen", fen);
+    if (play) {
+        fetcher.params.append("play", play);
+    }
+    return fetcher.startFetch(DB_ENDPOINT + database);
+}
+export function lookupPlayer({ fen, play, player, color, }) {
+    const fetcher = new Fetch({});
+    fetcher.params.append("color", color);
+    if (fen)
+        fetcher.params.append("fen", fen);
+    if (play) {
+        fetcher.params.append("play", play);
+    }
+    if (player) {
+        fetcher.params.append("player", player);
+    }
+    console.log("params - ", fetcher.params.toString());
+    return fetcher.startFetch(DB_ENDPOINT + "player");
 }
 export class SimpleStream {
     constructor() {
@@ -110,17 +62,15 @@ export class SimpleStream {
         this.stream.push(JSON.stringify(obj));
     }
     listen(callback) {
-        this.stream.on('data', chunk => {
+        this.stream.on("data", (chunk) => {
             const converted = JSON.parse(chunk);
             callback(converted);
         });
     }
 }
-export function fetchUserInfo(username) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const userDetailsF = yield fetch("https://lichess.org/api/user/" + username);
-        const userDetails = yield userDetailsF.json();
-        return userDetails;
-    });
+export async function fetchUserInfo(username) {
+    const userDetailsF = await fetch("https://lichess.org/api/user/" + username);
+    const userDetails = (await userDetailsF.json());
+    return userDetails;
 }
-//# sourceMappingURL=Fetcher.js.map
+//# sourceMappingURL=fetcher.js.map
