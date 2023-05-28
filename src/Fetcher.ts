@@ -91,7 +91,15 @@ export function lookupPlayer({
   console.log("params - ", fetcher.params.toString());
   return fetcher.startFetch(DB_ENDPOINT + "player");
 }
-
+/**
+ * only to be used when one object is expected from the stream
+ * @param stream
+ */
+export function promisifyStream<T>(stream: SimpleStream<T>) {
+  return new Promise<T>((r) => {
+    stream.listen(r);
+  });
+}
 export class SimpleStream<T> {
   private stream: PassThrough;
   constructor() {
@@ -100,6 +108,7 @@ export class SimpleStream<T> {
   write(obj: T) {
     this.stream.push(JSON.stringify(obj));
   }
+
   listen(callback: (obj: T) => void) {
     this.stream.on("data", (chunk) => {
       const converted = JSON.parse(chunk) as T;
