@@ -3,7 +3,7 @@ import { Game } from "./game";
 import S, { PassThrough } from "stream";
 import { Response } from "cross-fetch";
 import { Fetch } from "./fetch";
-import { PositionJson } from "./lookupTypes";
+import { PlayerOpenings, PositionJson } from "./lookupTypes";
 
 // import fetch from "node-fetch";
 // import fetch from "node-fetch";
@@ -79,7 +79,7 @@ export function lookupPlayer({
   player: string;
   color: "white" | "black";
 }) {
-  const fetcher = new Fetch<PositionJson>({});
+  const fetcher = new Fetch<PlayerOpenings>({});
   fetcher.params.append("color", color);
   if (fen) fetcher.params.append("fen", fen);
   if (play) {

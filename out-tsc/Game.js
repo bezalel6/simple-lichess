@@ -19,7 +19,9 @@ class Game {
             this.blackMoves = [];
             const m = this.moves.split(/[0-9]+[.] /);
             for (let i = 1; i < m.length; i++) {
-                const [whiteM, blackM] = m[i].split(" ").filter(s => !!s.trim().length);
+                const [whiteM, blackM] = m[i]
+                    .split(" ")
+                    .filter((s) => !!s.trim().length);
                 if (!(this.result === "1-0" && i === m.length - 1)) {
                     this.blackMoves.push(blackM);
                 }
@@ -32,7 +34,8 @@ class Game {
         }
     }
     get didWin() {
-        return (this.result === "1-0" && this.isWhite) || (this.result === "0-1" && !this.isWhite);
+        return ((this.result === "1-0" && this.isWhite) ||
+            (this.result === "0-1" && !this.isWhite));
     }
     get didDraw() {
         return this.result === "1/2-1/2";
@@ -70,7 +73,7 @@ class Game {
         return this.didPlay(this.convertDynamic(move, this.opponentUsername), this.opponentMoves, exact);
     }
     didPlay(move, moves, exact) {
-        return moves.find(m => (exact ? m === move : m.includes(move)));
+        return moves.find((m) => (exact ? m === move : m.includes(move)));
     }
     convertDynamic(move, player) {
         if (player === this.white) {

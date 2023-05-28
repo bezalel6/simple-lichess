@@ -24,8 +24,7 @@ class Game {
       this.result = pgnProperty("Result", pgn) as GameResult;
       this.termination = pgnProperty("Termination", pgn) as Termination;
       const match = pgn.match("\n(1[.].+)");
-      if (match)
-        this.moves = match[1]!;
+      if (match) this.moves = match[1]!;
       else {
         this.moves = "";
       }
@@ -33,22 +32,24 @@ class Game {
       this.blackMoves = [];
       const m = this.moves.split(/[0-9]+[.] /);
       for (let i = 1; i < m.length; i++) {
-        const [whiteM, blackM] = m[i].split(" ").filter(s => !!s.trim().length);
+        const [whiteM, blackM] = m[i]
+          .split(" ")
+          .filter((s) => !!s.trim().length);
         if (!(this.result === "1-0" && i === m.length - 1)) {
           this.blackMoves.push(blackM);
         }
         this.whiteMoves.push(whiteM);
-
       }
       this.description = `white:${this.white} vs black:${this.black} ${this.result}`;
-
     } catch (e) {
       throw new Error(`threw inside game constructor. pgn: ${pgn}. e: ${e}`);
     }
-
   }
   get didWin(): boolean {
-    return (this.result === "1-0" && this.isWhite) || (this.result === "0-1" && !this.isWhite);
+    return (
+      (this.result === "1-0" && this.isWhite) ||
+      (this.result === "0-1" && !this.isWhite)
+    );
   }
   get didDraw(): boolean {
     return this.result === "1/2-1/2";
@@ -78,7 +79,11 @@ class Game {
       return this.didPlay(move, this.myMoves, exact);
     }
 
-    return this.didPlay(this.convertDynamic(move, this.myUsername), this.myMoves, exact);
+    return this.didPlay(
+      this.convertDynamic(move, this.myUsername),
+      this.myMoves,
+      exact
+    );
   }
 
   didOpponentPlay(move: string | DynamicMove, exact: boolean = false) {
@@ -87,11 +92,15 @@ class Game {
       return this.didPlay(move, this.opponentMoves, exact);
     }
 
-    return this.didPlay(this.convertDynamic(move, this.opponentUsername), this.opponentMoves, exact);
+    return this.didPlay(
+      this.convertDynamic(move, this.opponentUsername),
+      this.opponentMoves,
+      exact
+    );
   }
 
   didPlay(move: string, moves: string[], exact: boolean) {
-    return moves.find(m => (exact ? m === move : m.includes(move)));
+    return moves.find((m) => (exact ? m === move : m.includes(move)));
   }
   convertDynamic(move: DynamicMove, player: string) {
     if (player === this.white) {

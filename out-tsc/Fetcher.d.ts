@@ -1,6 +1,6 @@
 import UserInfo from "./UserData";
 import { Game } from "./game";
-import { PositionJson } from "./lookupTypes";
+import { PlayerOpenings, PositionJson } from "./lookupTypes";
 declare type RatedRequirement = "rated" | "unrated" | "both";
 export interface FetchOptions {
     accessToken?: string;
@@ -22,7 +22,7 @@ export declare function lookupPlayer({ fen, play, player, color, }: {
     play?: string;
     player: string;
     color: "white" | "black";
-}): SimpleStream<PositionJson>;
+}): SimpleStream<PlayerOpenings>;
 export declare class SimpleStream<T> {
     private stream;
     constructor();
