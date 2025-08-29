@@ -1,6 +1,6 @@
-import { AccessContext, HttpClient, OAuth2AuthCodePKCE } from "@bity/oauth2-auth-code-pkce";
+import { AccessContext, OAuth2AuthCodePKCE } from "@bity/oauth2-auth-code-pkce";
 export declare const lichessHost = "https://lichess.org";
-export declare const scopes: any[];
+export declare const scopes: never[];
 export declare let clientId: string;
 export declare let clientUrl: string;
 export interface SetupProps {
@@ -23,7 +23,6 @@ export declare class Ctrl {
     redraw?: () => void;
     login(): Promise<void>;
     init(): Promise<void>;
-    tryRedraw(): void;
-    useApi(fetch: HttpClient): Promise<void>;
+    private tryRedraw;
     logout(): Promise<void>;
 }

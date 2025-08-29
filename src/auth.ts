@@ -20,14 +20,14 @@ let didSetup = false;
  *  clientId: string; // "example.com"
  *  clientUrl: string; //"http://localhost:5173/"
  */
-export function setup({ clientID, clientURL }: SetupProps) {
-  clientUrl = a(clientURL);
+export function setup({ clientID, clientURL }: SetupProps): void {
+  clientUrl = cleanUrl(clientURL);
   clientId = clientID;
   didSetup = true;
 }
 
-function a(u: string) {
-  const url = new URL(u);
+function cleanUrl(urlString: string): string {
+  const url = new URL(urlString);
   url.search = "";
   return url.href;
 }
@@ -43,7 +43,7 @@ export class Ctrl {
   });
   constructor() {
     if (!didSetup) {
-      throw "didnt setup";
+      throw new Error("Authentication not setup. Call setup() first with clientID and clientURL.");
     }
   }
   error?: any;
@@ -52,61 +52,42 @@ export class Ctrl {
   email?: string;
   redraw?: () => void;
 
-  async login() {
-    // Redirect to authentication prompt.
+  async login(): Promise<void> {
     await this.oauth.fetchAuthorizationCode();
   }
 
-  async init() {
+  async init(): Promise<void> {
     try {
       const hasAuthCode = await this.oauth.isReturningFromAuthServer();
       if (hasAuthCode) {
-        // Might want to persist accessContext.token until the user logs out.
         this.accessContext = await this.oauth.getAccessToken();
-        console.log(this.accessContext);
         this.tryRedraw();
-
-        // Can also use this convenience wrapper for fetch() instead of
-        // using manually using getAccessToken() and setting the
-        // "Authorization: Bearer ..." header.
-        // const fetch = this.oauth.decorateFetchHTTPClient(window.fetch);
-        // await this.useApi(fetch);
-      } else {
-        console.log("has no auth");
       }
     } catch (err) {
       this.error = err;
-      console.error(err);
       this.tryRedraw();
     }
   }
-  tryRedraw() {
+  private tryRedraw(): void {
     if (this.redraw) {
       this.redraw();
     }
   }
-  async useApi(fetch: HttpClient) {
-    // Example request using @bity/oauth2-auth-code-pkce decorator:
-    // Lookup email associated with the Lichess account.
-    // Requests will fail with 401 Unauthorized if the access token expired
-    // or was revoked. Make sure to offer a chance to reauthenticate.
-    // const res = await fetch(`${lichessHost}/api/account/`);
-    // this.email = (await res.json()).email;
-    this.tryRedraw();
-  }
 
-  async logout() {
+  async logout(): Promise<void> {
     const token = this.accessContext?.token?.value;
     this.accessContext = undefined;
     this.error = undefined;
     this.email = undefined;
     this.tryRedraw();
-    // Example request using vanilla fetch: Revoke access token.
-    await fetch(`${lichessHost}/api/token`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    
+    if (token) {
+      await fetch(`${lichessHost}/api/token`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    }
   }
 }

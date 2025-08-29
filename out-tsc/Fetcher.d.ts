@@ -1,7 +1,7 @@
 import UserInfo from "./UserData";
-import { Game } from "./game";
+import { Game } from "./Game";
 import { PlayerOpenings, PositionJson } from "./lookupTypes";
-declare type RatedRequirement = "rated" | "unrated" | "both";
+type RatedRequirement = "rated" | "unrated" | "both";
 export interface FetchOptions {
     accessToken?: string;
 }
@@ -10,7 +10,7 @@ interface GamesOptions extends FetchOptions {
     maxGames?: number;
 }
 export declare function fetchGames(username: string, { rated, accessToken, maxGames }: GamesOptions): SimpleStream<Game>;
-export declare function fetchGame(gameID: string, myUn: any): SimpleStream<Game>;
+export declare function fetchGame(gameID: string, myUsername: string): SimpleStream<Game>;
 export interface LookupParams {
     database: "masters" | "lichess";
     fen?: string;
@@ -23,11 +23,22 @@ export declare function lookupPlayer({ fen, play, player, color, }: {
     player: string;
     color: "white" | "black";
 }): SimpleStream<PlayerOpenings>;
+/**
+ * only to be used when one object is expected from the stream
+ * @param stream
+ */
+export declare function promisifyStream<T>(stream: SimpleStream<T>): Promise<T>;
 export declare class SimpleStream<T> {
-    private stream;
-    constructor();
+    private callbacks;
+    private errorCallbacks;
+    private endCallbacks;
+    private ended;
     write(obj: T): void;
     listen(callback: (obj: T) => void): void;
+    onError(callback: (error: Error) => void): void;
+    onEnd(callback: () => void): void;
+    error(error: Error): void;
+    end(): void;
 }
 export declare function fetchUserInfo(username: string): Promise<UserInfo>;
 export {};

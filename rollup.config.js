@@ -7,14 +7,13 @@
 
 import commonjs from "@rollup/plugin-commonjs";
 import nodePolyfills from "rollup-plugin-polyfill-node";
-import nodeResolve from "@rollup/plugin-node-resolve";
 
 // });
 export default {
   input: "./out-tsc/index.js",
-  external: ["cross-fetch", "cross-fetch/polyfill"],
+  external: ["cross-fetch", "@bity/oauth2-auth-code-pkce"],
   output: {
-    name: "My Name",
+    name: "SimpleLichessAPI",
     file: "dist/bundle.js",
     format: "cjs",
   },

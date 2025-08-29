@@ -1,4 +1,4 @@
-import { DynamicMove, GameResult, Termination } from "./misc";
+import { DynamicMove, GameResult, Termination } from "./Misc";
 declare class Game {
     event: string;
     site: string;
@@ -21,9 +21,9 @@ declare class Game {
     get isWhite(): boolean;
     get opponentUsername(): string;
     get perspectiveResult(): "i won" | "i lost" | "i drew";
-    didIPlay(move: string | DynamicMove, exact?: boolean): string;
-    didOpponentPlay(move: string | DynamicMove, exact?: boolean): string;
-    didPlay(move: string, moves: string[], exact: boolean): string;
+    didIPlay(move: string | DynamicMove, exact?: boolean): string | undefined;
+    didOpponentPlay(move: string | DynamicMove, exact?: boolean): string | undefined;
+    didPlay(move: string, moves: string[], exact: boolean): string | undefined;
     convertDynamic(move: DynamicMove, player: string): string;
 }
 export { Game };

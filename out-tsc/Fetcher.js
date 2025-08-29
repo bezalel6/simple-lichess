@@ -1,5 +1,4 @@
-import { Game } from "./game";
-import { PassThrough } from "stream";
+import { Game } from "./Game";
 import { Fetch } from "./fetch";
 const GAMES_FETCH = "https://lichess.org/api/games/user";
 const GAME_FETCH = "https://lichess.org/game/export/";
@@ -24,10 +23,10 @@ export function fetchGames(username, { rated = "both", accessToken, maxGames }) 
         return new Game(str, username);
     });
 }
-export function fetchGame(gameID, myUn) {
+export function fetchGame(gameID, myUsername) {
     const f = new Fetch({});
     return f.startFetch(GAME_FETCH + gameID, (str) => {
-        return new Game(str, myUn);
+        return new Game(str, myUsername);
     });
 }
 const DB_ENDPOINT = "https://explorer.lichess.ovh/";
@@ -51,26 +50,71 @@ export function lookupPlayer({ fen, play, player, color, }) {
     if (player) {
         fetcher.params.append("player", player);
     }
-    console.log("params - ", fetcher.params.toString());
     return fetcher.startFetch(DB_ENDPOINT + "player");
+}
+/**
+ * only to be used when one object is expected from the stream
+ * @param stream
+ */
+export function promisifyStream(stream) {
+    return new Promise((r) => {
+        stream.listen(r);
+    });
 }
 export class SimpleStream {
     constructor() {
-        this.stream = new PassThrough();
+        this.callbacks = [];
+        this.errorCallbacks = [];
+        this.endCallbacks = [];
+        this.ended = false;
     }
     write(obj) {
-        this.stream.push(JSON.stringify(obj));
+        if (this.ended)
+            return;
+        // Emit to all registered callbacks
+        for (const callback of this.callbacks) {
+            try {
+                callback(obj);
+            }
+            catch (e) {
+                // Emit error but don't stop other callbacks
+                this.error(new Error(`Callback error: ${e}`));
+            }
+        }
     }
     listen(callback) {
-        this.stream.on("data", (chunk) => {
-            const converted = JSON.parse(chunk);
-            callback(converted);
-        });
+        this.callbacks.push(callback);
+    }
+    onError(callback) {
+        this.errorCallbacks.push(callback);
+    }
+    onEnd(callback) {
+        if (this.ended) {
+            callback();
+            return;
+        }
+        this.endCallbacks.push(callback);
+    }
+    error(error) {
+        for (const callback of this.errorCallbacks) {
+            callback(error);
+        }
+    }
+    end() {
+        if (this.ended)
+            return;
+        this.ended = true;
+        for (const callback of this.endCallbacks) {
+            callback();
+        }
     }
 }
 export async function fetchUserInfo(username) {
-    const userDetailsF = await fetch("https://lichess.org/api/user/" + username);
-    const userDetails = (await userDetailsF.json());
+    const userDetailsResponse = await fetch("https://lichess.org/api/user/" + username);
+    if (!userDetailsResponse.ok) {
+        throw new Error(`Failed to fetch user info: ${userDetailsResponse.status} ${userDetailsResponse.statusText}`);
+    }
+    const userDetails = (await userDetailsResponse.json());
     return userDetails;
 }
-//# sourceMappingURL=fetcher.js.map
+//# sourceMappingURL=Fetcher.js.map

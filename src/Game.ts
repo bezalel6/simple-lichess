@@ -1,4 +1,4 @@
-import { DynamicMove, GameResult, Termination } from "./misc";
+import { DynamicMove, GameResult, Termination } from "./Misc";
 
 class Game {
   event: string;
@@ -24,21 +24,29 @@ class Game {
       this.result = pgnProperty("Result", pgn) as GameResult;
       this.termination = pgnProperty("Termination", pgn) as Termination;
       const match = pgn.match("\n(1[.].+)");
-      if (match) this.moves = match[1]!;
-      else {
+      if (match && match[1]) {
+        this.moves = match[1];
+      } else {
         this.moves = "";
       }
       this.whiteMoves = [];
       this.blackMoves = [];
       const m = this.moves.split(/[0-9]+[.] /);
       for (let i = 1; i < m.length; i++) {
-        const [whiteM, blackM] = m[i]
+        const moveText = m[i];
+        if (!moveText) continue;
+        
+        const [whiteM, blackM] = moveText
           .split(" ")
           .filter((s) => !!s.trim().length);
-        if (!(this.result === "1-0" && i === m.length - 1)) {
+        
+        if (whiteM) {
+          this.whiteMoves.push(whiteM);
+        }
+        
+        if (blackM && !(this.result === "1-0" && i === m.length - 1)) {
           this.blackMoves.push(blackM);
         }
-        this.whiteMoves.push(whiteM);
       }
       this.description = `white:${this.white} vs black:${this.black} ${this.result}`;
     } catch (e) {
@@ -55,7 +63,7 @@ class Game {
     return this.result === "1/2-1/2";
   }
   get didLose(): boolean {
-    return !this.didDraw;
+    return !this.didDraw && !this.didWin;
   }
   get myMoves(): string[] {
     return this.isWhite ? this.whiteMoves : this.blackMoves;
@@ -111,6 +119,10 @@ class Game {
   }
 }
 function pgnProperty(property: string, pgn: string): string {
-  return pgn.match(`\\[${property} "([^"]+)`)![1]!;
+  const match = pgn.match(`\\[${property} "([^"]+)`);
+  if (!match || !match[1]) {
+    throw new Error(`Required PGN property "${property}" not found or invalid`);
+  }
+  return match[1];
 }
 export { Game };

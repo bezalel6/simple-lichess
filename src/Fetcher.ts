@@ -1,12 +1,8 @@
 import UserInfo from "./UserData";
-import { Game } from "./game";
-import S, { PassThrough } from "stream";
-import { Response } from "cross-fetch";
+import { Game } from "./Game";
+import { PassThrough } from "stream";
 import { Fetch } from "./fetch";
 import { PlayerOpenings, PositionJson } from "./lookupTypes";
-
-// import fetch from "node-fetch";
-// import fetch from "node-fetch";
 
 type RatedRequirement = "rated" | "unrated" | "both";
 
@@ -46,10 +42,10 @@ export function fetchGames(
   });
 }
 
-export function fetchGame(gameID: string, myUn) {
+export function fetchGame(gameID: string, myUsername: string) {
   const f = new Fetch<Game>({});
   return f.startFetch(GAME_FETCH + gameID, (str) => {
-    return new Game(str, myUn);
+    return new Game(str, myUsername);
   });
 }
 
@@ -88,7 +84,6 @@ export function lookupPlayer({
   if (player) {
     fetcher.params.append("player", player);
   }
-  console.log("params - ", fetcher.params.toString());
   return fetcher.startFetch(DB_ENDPOINT + "player");
 }
 /**
@@ -101,23 +96,63 @@ export function promisifyStream<T>(stream: SimpleStream<T>) {
   });
 }
 export class SimpleStream<T> {
-  private stream: PassThrough;
-  constructor() {
-    this.stream = new PassThrough();
-  }
-  write(obj: T) {
-    this.stream.push(JSON.stringify(obj));
+  private callbacks: Array<(obj: T) => void> = [];
+  private errorCallbacks: Array<(error: Error) => void> = [];
+  private endCallbacks: Array<() => void> = [];
+  private ended = false;
+
+  write(obj: T): void {
+    if (this.ended) return;
+    
+    // Emit to all registered callbacks
+    for (const callback of this.callbacks) {
+      try {
+        callback(obj);
+      } catch (e) {
+        // Emit error but don't stop other callbacks
+        this.error(new Error(`Callback error: ${e}`));
+      }
+    }
   }
 
-  listen(callback: (obj: T) => void) {
-    this.stream.on("data", (chunk) => {
-      const converted = JSON.parse(chunk) as T;
-      callback(converted);
-    });
+  listen(callback: (obj: T) => void): void {
+    this.callbacks.push(callback);
+  }
+
+  onError(callback: (error: Error) => void): void {
+    this.errorCallbacks.push(callback);
+  }
+
+  onEnd(callback: () => void): void {
+    if (this.ended) {
+      callback();
+      return;
+    }
+    this.endCallbacks.push(callback);
+  }
+
+  error(error: Error): void {
+    for (const callback of this.errorCallbacks) {
+      callback(error);
+    }
+  }
+
+  end(): void {
+    if (this.ended) return;
+    this.ended = true;
+    
+    for (const callback of this.endCallbacks) {
+      callback();
+    }
   }
 }
-export async function fetchUserInfo(username: string) {
-  const userDetailsF = await fetch("https://lichess.org/api/user/" + username);
-  const userDetails = (await userDetailsF.json()) as UserInfo;
+export async function fetchUserInfo(username: string): Promise<UserInfo> {
+  const userDetailsResponse = await fetch("https://lichess.org/api/user/" + username);
+  
+  if (!userDetailsResponse.ok) {
+    throw new Error(`Failed to fetch user info: ${userDetailsResponse.status} ${userDetailsResponse.statusText}`);
+  }
+  
+  const userDetails = (await userDetailsResponse.json()) as UserInfo;
   return userDetails;
 }

@@ -1,50 +1,6 @@
-export interface White {
+export interface Player {
   name: string;
   rating: number;
-}
-
-export interface Black {
-  name: string;
-  rating: number;
-}
-
-export interface Game {
-  id: string;
-  winner: string;
-  white: White;
-  black: Black;
-  year: number;
-  month: string;
-}
-
-export interface Move {
-  uci: string;
-  san: string;
-  averageRating: number;
-  white: number;
-  draws: number;
-  black: number;
-  game: Game;
-}
-
-export interface White2 {
-  name: string;
-  rating: number;
-}
-
-export interface Black2 {
-  name: string;
-  rating: number;
-}
-
-export interface TopGame {
-  uci: string;
-  id: string;
-  winner: string;
-  white: White2;
-  black: Black2;
-  year: number;
-  month: string;
 }
 
 export interface Opening {
@@ -52,38 +8,31 @@ export interface Opening {
   name: string;
 }
 
-export interface PositionJson {
-  white: number;
-  draws: number;
-  black: number;
-  moves: Move[];
-  topGames: TopGame[];
-  recentGames: any[];
-  opening: Opening;
-}
-
-export interface Black {
-  name: string;
-  rating: number;
-}
-
-export interface White {
-  name: string;
-  rating: number;
-}
-
-export interface Game {
+export interface DatabaseGame {
   id: string;
   winner: string;
-  speed: string;
-  mode: string;
-  black: Black;
-  white: White;
+  white: Player;
+  black: Player;
   year: number;
   month: string;
 }
 
-export interface Move {
+export interface PlayerGame extends DatabaseGame {
+  speed: string;
+  mode: string;
+}
+
+export interface DatabaseMove {
+  uci: string;
+  san: string;
+  averageRating: number;
+  white: number;
+  draws: number;
+  black: number;
+  game: DatabaseGame;
+}
+
+export interface PlayerMove {
   uci: string;
   san: string;
   averageOpponentRating: number;
@@ -91,41 +40,34 @@ export interface Move {
   white: number;
   draws: number;
   black: number;
-  game: Game;
+  game: PlayerGame;
 }
 
-export interface Black2 {
-  name: string;
-  rating: number;
-}
-
-export interface White2 {
-  name: string;
-  rating: number;
-}
-
-export interface RecentGame {
+export interface TopGame {
   uci: string;
   id: string;
   winner: string;
-  speed: string;
-  mode: string;
-  black: Black2;
-  white: White2;
+  white: Player;
+  black: Player;
   year: number;
   month: string;
 }
 
-export interface Opening {
-  eco: string;
-  name: string;
+export interface PositionJson {
+  white: number;
+  draws: number;
+  black: number;
+  moves: DatabaseMove[];
+  topGames: TopGame[];
+  recentGames: any[];
+  opening: Opening;
 }
 
 export interface PlayerOpenings {
   white: number;
   draws: number;
   black: number;
-  moves: Move[];
-  recentGames: RecentGame[];
+  moves: PlayerMove[];
+  recentGames: PlayerGame[];
   opening: Opening;
 }
